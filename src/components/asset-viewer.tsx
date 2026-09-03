@@ -13,7 +13,7 @@ type AssetImageProps = {
 export function AssetImage({ asset, onOpen, className = '', priority = false }: AssetImageProps) {
   return (
     <button className={`asset-image ${className}`} type="button" onClick={onOpen} aria-label={`Open ${asset.label}`} data-testid={`button-open-${asset.id}`}>
-      <img src={asset.src} alt={asset.alt} loading={priority ? 'eager' : 'lazy'} />
+      <img src={asset.src} alt={asset.alt} loading={priority ? 'eager' : 'lazy'} decoding="async" />
       <span className="asset-image__hint">Open full frame</span>
     </button>
   );
@@ -28,6 +28,8 @@ type AssetViewerProps = {
 
 export function AssetViewer({ assets, activeIndex, onClose, onChange }: AssetViewerProps) {
   const closeRef = useRef<HTMLButtonElement>(null);
+  const viewerRef = useRef<HTMLDivElement>(null);
+  const previousFocusRef = useRef<HTMLElement | null>(document.activeElement instanceof HTMLElement ? document.activeElement : null);
   const changeRef = useRef(onChange);
   changeRef.current = onChange;
   const activeAsset = assets[activeIndex];
@@ -38,6 +40,19 @@ export function AssetViewer({ assets, activeIndex, onClose, onChange }: AssetVie
       if (event.key === 'Escape') onClose();
       if (event.key === 'ArrowLeft' && assets.length > 1) changeRef.current((activeIndex - 1 + assets.length) % assets.length);
       if (event.key === 'ArrowRight' && assets.length > 1) changeRef.current((activeIndex + 1) % assets.length);
+      if (event.key === 'Tab' && viewerRef.current) {
+        const focusable = Array.from(viewerRef.current.querySelectorAll<HTMLElement>('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])')).filter((element) => !element.hasAttribute('disabled'));
+        if (focusable.length === 0) return;
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        if (event.shiftKey && document.activeElement === first) {
+          event.preventDefault();
+          last.focus();
+        } else if (!event.shiftKey && document.activeElement === last) {
+          event.preventDefault();
+          first.focus();
+        }
+      }
     };
     document.body.style.overflow = 'hidden';
     closeRef.current?.focus();
@@ -45,6 +60,7 @@ export function AssetViewer({ assets, activeIndex, onClose, onChange }: AssetVie
     return () => {
       document.body.style.overflow = '';
       window.removeEventListener('keydown', onKeyDown);
+      previousFocusRef.current?.focus();
     };
   }, [activeAsset, activeIndex, assets.length, onClose]);
 
@@ -59,7 +75,7 @@ export function AssetViewer({ assets, activeIndex, onClose, onChange }: AssetVie
           exit={{ opacity: 0 }}
           onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}
         >
-          <motion.div className="asset-viewer" role="dialog" aria-modal="true" aria-labelledby="asset-viewer-title" initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 18 }}>
+          <motion.div ref={viewerRef} className="asset-viewer" role="dialog" aria-modal="true" aria-labelledby="asset-viewer-title" initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 18 }}>
             <div className="asset-viewer__top">
               <div>
                 <span className="asset-viewer__kicker">{activeAsset.label}</span>
@@ -68,7 +84,7 @@ export function AssetViewer({ assets, activeIndex, onClose, onChange }: AssetVie
               <button ref={closeRef} className="asset-viewer__close" type="button" onClick={onClose} aria-label="Close image viewer" data-testid="button-close-image-viewer"><X size={18} /></button>
             </div>
             <div className="asset-viewer__frame">
-              <img src={activeAsset.src} alt={activeAsset.alt} />
+              <img src={activeAsset.src} alt={activeAsset.alt} loading="lazy" decoding="async" />
             </div>
             <div className="asset-viewer__bottom">
               <span>{String(activeIndex + 1).padStart(2, '0')} / {String(assets.length).padStart(2, '0')}</span>

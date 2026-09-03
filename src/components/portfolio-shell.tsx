@@ -99,7 +99,7 @@ function Hero() {
           </div>
         </div>
         <div className="hero__portrait reveal" aria-label="Portrait of Abhash Deep">
-          <img src="/portfolio/hero-beach.jpg" alt="Abhash Deep at the beach" />
+          <img src="/portfolio/hero-beach.jpg" alt="Abhash Deep at the beach" loading="eager" decoding="async" />
         </div>
       </div>
       <div className="hero__orb" aria-hidden="true"><span /></div>
@@ -388,7 +388,6 @@ function Contact() {
           <Download size={15} /> View resume
         </a>
         <a className="text-link" href="mailto:abhashdeep11@gmail.com">abhashdeep11@gmail.com</a>
-        <a className="text-link" href="tel:+919065682814">+91 90656 82814</a>
       </div>
       <p className="contact__small reveal">Creative direction, content, design, and digital execution — available for meaningful work across brands, channels, and creative teams.</p>
       <div className="contact__small reveal" style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
